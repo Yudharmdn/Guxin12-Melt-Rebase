@@ -4,7 +4,7 @@
 ### AnyKernel setup
 # global properties
 properties() { '
-kernel.string=Melt Kernel By Pzqqt && Coolapk@初春在鹿野
+kernel.string=Melt Rebase By @Pzqqt Rebuild By @Yudharn
 do.devicecheck=1
 do.modules=0
 do.systemless=1
@@ -563,138 +563,6 @@ fi
 
 unset vendor_dlkm_modules_options_file
 
-# ==================================================
-# KPM 内核模块补丁
-# ==================================================
-
-# 询问用户是否启用 KPM
-ui_print " "
-ui_print "=========================================="
-ui_print "        $_LANG_KPM_16"
-ui_print "=========================================="
-ui_print " "
-ui_print "$_LANG_KPM_17"
-ui_print "$_LANG_KPM_17_1"
-ui_print "$_LANG_KPM_17_2"
-ui_print "$_LANG_KPM_17_3"
-ui_print " "
-
-enable_kpm=false
-if keycode_select \
-    "$_LANG_KPM_18" \
-    " " \
-    "$_LANG_NOTES" \
-    "$_LANG_KPM_18_1" \
-    "$_LANG_KPM_18_2"; then
-    enable_kpm=true
-else
-    ui_print "$_LANG_KPM_18_3"
-    ui_print "$_LANG_KPM_19"
-fi
-
-if $enable_kpm; then
-    ui_print " "
-    ui_print "$_LANG_KPM_19_1"
-    ui_print "=========================================="
-
-    patch_bin="${bin}/patch_android"
-    original_image="${home}/Image"
-    max_retries=3
-    attempt=1
-    patch_success=false
-
-    # 验证必要文件
-    if [ ! -f "$patch_bin" ] || [ ! -f "$original_image" ]; then
-        abort "! $_LANG_KPM_4 $_LANG_KPM_5 $_LANG_FAILED"
-    fi
-
-    while [ $attempt -le $max_retries ] && ! $patch_success; do
-        ui_print " "
-        ui_print "${_LANG_KPM_6} [$attempt/$max_retries]"
-        ui_print "$_LANG_KPM_7"
-
-        # 创建临时目录
-        temp_dir="/data/local/tmp/kpm_patch_$(date +%Y%m%d_%H%M%S)_$$"
-        if ! mkdir -p "$temp_dir"; then
-            ui_print "! ${_LANG_KPM_8}: $temp_dir"
-            attempt=$((attempt + 1))
-            sleep 2
-            continue
-        fi
-
-        ui_print "- ${_LANG_KPM_9}: $(basename "$temp_dir")"
-
-        # 复制文件
-        if ! cp "$original_image" "$temp_dir/Image" || ! cp "$patch_bin" "$temp_dir/patch_android"; then
-            ui_print "! ${_LANG_FAILED_TO_EXTRACT}"
-            rm -rf "$temp_dir"
-            attempt=$((attempt + 1))
-            sleep 2
-            continue
-        fi
-
-        chmod +x "$temp_dir/patch_android"
-
-        # 执行补丁工具
-        ui_print "- $_LANG_KPM_1"
-        cd "$temp_dir" || {
-            rm -rf "$temp_dir"
-            attempt=$((attempt + 1))
-            sleep 2
-            continue
-        }
-
-        output=$("$temp_dir/patch_android" 2>&1)
-        exit_code=$?
-
-        ui_print "- ${_LANG_KPM_2}: $exit_code"
-        if [ $exit_code -ne 0 ] && [ -n "$output" ]; then
-            ui_print "! $_LANG_KPM_3"
-            echo "$output" | while IFS= read -r line; do
-                ui_print "   $line"
-            done
-        fi
-
-        # 检查生成文件
-        if [ ! -f "$temp_dir/oImage" ]; then
-            ui_print "! $_LANG_KPM_11"
-            rm -rf "$temp_dir"
-            attempt=$((attempt + 1))
-            sleep 2
-            continue
-        fi
-
-        # 替换原始镜像
-        if mv "$temp_dir/oImage" "$temp_dir/Image" && \
-           cp "$temp_dir/Image" "$original_image"; then
-            ui_print "- $_LANG_KPM_12"
-            patch_success=true
-        else
-            ui_print "! $_LANG_KPM_13"
-        fi
-
-        rm -rf "$temp_dir"
-
-        if ! $patch_success; then
-            attempt=$((attempt + 1))
-            sleep 2
-        fi
-    done
-
-    if $patch_success; then
-        ui_print " "
-        ui_print "$_LANG_KPM_19_2"
-        ui_print "=========================================="
-    else
-        ui_print " "
-        ui_print "! ${_LANG_KPM_15} $max_retries ${_LANG_KPM_15_1}"
-        ui_print "! $_LANG_KPM_19_3"
-        ui_print "=========================================="
-        abort "$_LANG_KPM_19_4"
-    fi
-fi
-# ===== End KPM =====
-
 # ===== Optional: perfmgr.ko 来自酷安@AviderMin=====
 include_perfmgr=false
 
@@ -742,17 +610,17 @@ if ${include_perfmgr}; then
 fi
 # ===== End perfmgr.ko =====
 
-# Disguised the GPU model as Adreno730v3
-disguised_adreno730=false
+# Disguised the GPU model as Adreno830v2
+disguised_adreno830=false
 if keycode_select \
-    "$_LANG_SELECT_DISGUISED_ADRENO730" \
+    "$_LANG_SELECT_DISGUISED_ADRENO830" \
     " " \
     "$_LANG_NOTES" \
-    "$_LANG_SELECT_DISGUISED_ADRENO730_PROMPT_1" \
-    "$_LANG_SELECT_DISGUISED_ADRENO730_PROMPT_2" \
-    "$_LANG_SELECT_DISGUISED_ADRENO730_PROMPT_3" \
-    "$_LANG_SELECT_DISGUISED_ADRENO730_PROMPT_4"; then
-	disguised_adreno730=true
+    "$_LANG_SELECT_DISGUISED_ADRENO830_PROMPT_1" \
+    "$_LANG_SELECT_DISGUISED_ADRENO830_PROMPT_2" \
+    "$_LANG_SELECT_DISGUISED_ADRENO830_PROMPT_3" \
+    "$_LANG_SELECT_DISGUISED_ADRENO830_PROMPT_4"; then
+	disguised_adreno830=true
 fi
 
 # ntsync.ko
@@ -1037,16 +905,16 @@ for dtb_file in $dtb_img_splitted; do
 done
 [ -z "$ukee_dtb" ] && abort "! $_LANG_DTB_NOT_FOUND_UKEE"
 
-if ${disguised_adreno730}; then
-	${bin}/fdtput ${home}/dtb "/soc/qcom,kgsl-3d0@3d00000" "qcom,gpu-model" "Adreno730v3" -ts
-fi
-unset disguised_adreno730
-
 # Copy the gpu frequency and voltage configuration of old dtb to the new dtb
 if [ "$(sha1 $ukee_dtb)" != "$(sha1 ${home}/dtb)" ]; then
 	copy_gpu_pwrlevels_conf "$ukee_dtb" ${home}/dtb
 	sync
 fi
+
+if ${disguised_adreno830}; then
+	${bin}/fdtput ${home}/dtb "/soc/qcom,kgsl-3d0@3d00000" "qcom,gpu-model" "Adreno830v2" -ts
+fi
+unset disguised_adreno830
 
 rm -rf ${home}/_dtbs
 
